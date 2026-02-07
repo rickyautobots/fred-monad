@@ -15,7 +15,12 @@ from decimal import Decimal
 from datetime import datetime
 
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+
+try:
+    from web3.middleware import geth_poa_middleware
+    HAS_POA_MIDDLEWARE = True
+except ImportError:
+    HAS_POA_MIDDLEWARE = False
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("FRED")
@@ -53,7 +58,8 @@ class MonadClient:
     def __init__(self, config: Config):
         self.config = config
         self.w3 = Web3(Web3.HTTPProvider(config.monad_rpc))
-        self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+        if HAS_POA_MIDDLEWARE:
+            self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
         
         if config.private_key:
             self.account = self.w3.eth.account.from_key(config.private_key)
